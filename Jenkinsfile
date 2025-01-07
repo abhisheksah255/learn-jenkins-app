@@ -46,14 +46,14 @@ pipeline {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.49.1-noble'
                     reuseNode true
-                    arg '-u root:root'
+                    
                 }
             }
             steps {
                 sh '''
                 echo "This is the E2E Stage"
-                npm install -g server
-                serve -s build
+                npm install server
+                node_modules/.bin/serve -s build
                 npx playwright test
                 '''
             }
