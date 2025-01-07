@@ -2,26 +2,26 @@ pipeline {
     agent any
 
     stages {
-        stage('Build'){
-            agent{
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                echo "This is the Build Stage"
-                ls -la
-                node --version
-                npm --version
-                npm ci
-                npm run build
-                ls -la
-                '''
+        // stage('Build'){
+        //     agent{
+        //         docker {
+        //             image 'node:18-alpine'
+        //             reuseNode true
+        //         }
+        //     }
+        //     steps {
+        //         sh '''
+        //         echo "This is the Build Stage"
+        //         ls -la
+        //         node --version
+        //         npm --version
+        //         npm ci
+        //         npm run build
+        //         ls -la
+        //         '''
             
-            }
-        }
+        //     }
+        // }
 
         stage('Test'){
             agent{
@@ -52,8 +52,9 @@ pipeline {
             steps {
                 sh '''
                 echo "This is the E2E Stage"
-                npm install server
-                node_modules/.bin/serve -s build
+                npm install serve
+                node_modules/.bin/serve -s build &
+                sleep 10
                 npx playwright test
                 '''
             }
