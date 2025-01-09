@@ -39,7 +39,7 @@ pipeline {
                     }
                     steps {
                         sh '''
-                        echo "This is the Test Build"
+                        echo "This is the Test stage"
                         ls -la
                         test -f build/index.html
                         npm test
