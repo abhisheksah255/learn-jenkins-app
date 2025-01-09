@@ -79,7 +79,27 @@ pipeline {
                 }
             }
         }
-       stage('Deploy'){
+        stage('Deploy Staging'){
+                    agent{
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        sh '''
+                        echo "This is the Deploy Staging Stage"
+                        npm install netlify-cli
+                        node_modules/.bin/netlify --version
+                        echo "Deploying to Staging environment Site Id :- $NETLIFY_SITE_ID"
+                        node_modules/.bin/netlify status
+                        node_modules/.bin/netlify deploy --dir=build
+                        '''
+                    
+                    }
+                }
+
+        stage('Deploy Production'){
             agent{
                 docker {
                     image 'node:18-alpine'
@@ -88,42 +108,42 @@ pipeline {
             }
             steps {
                 sh '''
-                echo "This is the Deploy Stage"
+                echo "This is the Deploy Production Stage"
                 npm install netlify-cli
                 node_modules/.bin/netlify --version
                 echo "Deploying to Production environment Site Id :- $NETLIFY_SITE_ID"
                 node_modules/.bin/netlify status
                 node_modules/.bin/netlify deploy --dir=build --prod
                 '''
-            
+
             }
         }
 
         stage('Production E2E'){
-                    agent{
-                        docker {
-                            // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
-                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                            reuseNode true
-                            
-                        }
+                agent{
+                    docker {
+                        // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
+                        image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                        reuseNode true
+                        
                     }
+                }
 
-                    environment{
-                        CI_ENVIRONMENT_URL = 'https://flourishing-sunshine-08d68d.netlify.app'
-                    }
+                environment{
+                    CI_ENVIRONMENT_URL = 'https://flourishing-sunshine-08d68d.netlify.app'
+                }
 
-                    steps {
-                        sh '''
-                        echo "This is the End to End Stage for production check "
-                        npx playwright test --reporter=line
-                        '''
+                steps {
+                    sh '''
+                    echo "This is the End to End Stage for production check "
+                    npx playwright test --reporter=line
+                    '''
+                }
+                post{
+                    always{
+                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright ProductionTest ', reportTitles: '', useWrapperFileDirectly: true])
                     }
-                    post{
-                        always{
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright ProductionTest ', reportTitles: '', useWrapperFileDirectly: true])
-                        }
-                    }
-                } 
+                }
+            } 
     } 
 }
