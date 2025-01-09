@@ -73,7 +73,7 @@ pipeline {
                     }
                     post{
                         always{
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright LocalTest', reportTitles: '', useWrapperFileDirectly: true])
                         }
                     }
                 }
@@ -97,6 +97,33 @@ pipeline {
                 '''
             
             }
-        } 
+        }
+
+        stage('Production E2E'){
+                    agent{
+                        docker {
+                            // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                            
+                        }
+                    }
+
+                    environment{
+                        CI_ENVIRONMENT_URL = 'https://flourishing-sunshine-08d68d.netlify.app'
+                    }
+
+                    steps {
+                        sh '''
+                        echo "This is the End to End Stage for production check "
+                        npx playwright test --reporter=line
+                        '''
+                    }
+                    post{
+                        always{
+                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright ProductionTest ', reportTitles: '', useWrapperFileDirectly: true])
+                        }
+                    }
+                } 
     } 
 }
