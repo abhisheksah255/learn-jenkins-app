@@ -89,11 +89,12 @@ pipeline {
                     steps {
                         sh '''
                         echo "This is the Deploy Staging Stage"
-                        npm install netlify-cli
+                        npm install netlify-cli node-jq
                         node_modules/.bin/netlify --version
                         echo "Deploying to Staging environment Site Id :- $NETLIFY_SITE_ID"
                         node_modules/.bin/netlify status
-                        node_modules/.bin/netlify deploy --dir=build
+                        node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
+                        node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json
                         '''
                     
                     }
@@ -109,7 +110,7 @@ pipeline {
                         
                     }
         }
-        
+
         stage('Deploy Production'){
             agent{
                 docker {
