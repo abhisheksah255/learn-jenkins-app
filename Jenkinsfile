@@ -99,6 +99,17 @@ pipeline {
                     }
                 }
 
+        stage('Approval'){
+                    steps {
+                        echo 'Waiting For Approval'
+                        timeout(time: 1, unit: 'MINUTES') {
+                             input 'Do you want to go For Deployment ?'
+                        }
+                        
+                        
+                    }
+        }
+        
         stage('Deploy Production'){
             agent{
                 docker {
