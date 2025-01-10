@@ -94,22 +94,53 @@ pipeline {
                         echo "Deploying to Staging environment Site Id :- $NETLIFY_SITE_ID"
                         node_modules/.bin/netlify status
                         node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
-                        node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json
+                        
                         '''
+                        script{
+                            env.STAGING_URL = sh(script: "node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json" , returnStdout: true )
+                        }
                     
                     }
                 }
 
-        stage('Approval'){
-                    steps {
-                        echo 'Waiting For Approval'
-                        timeout(time: 1, unit: 'MINUTES') {
-                             input 'Do you want to go For Deployment ?'
+        stage('Staging E2E'){
+                        agent{
+                            docker {
+                                // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
+                                image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                                reuseNode true
+                                
+                            }
                         }
-                        
-                        
+
+                        environment{
+                            CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
+                        }
+
+                        steps {
+                            sh '''
+                            echo "This is the End to End Stage for Staging check "
+                            npx playwright test --reporter=line
+                            '''
+                        }
+                        post{
+                            always{
+                                publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright StagingTest ', reportTitles: '', useWrapperFileDirectly: true])
+                            }
+                        }
                     }
-        }
+
+
+                stage('Approval'){
+                            steps {
+                                echo 'Waiting For Approval'
+                                timeout(time: 1, unit: 'MINUTES') {
+                                    input 'Do you want to go For Deployment ?'
+                                }
+                                
+                                
+                            }
+                }
 
         stage('Deploy Production'){
             agent{
