@@ -79,6 +79,10 @@ pipeline {
                 }
             }
         }
+
+
+
+
         stage('Deploy Staging'){
                     agent{
                         docker {
@@ -142,27 +146,8 @@ pipeline {
                             }
                 }
 
-        stage('Deploy Production'){
-            agent{
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                echo "This is the Deploy Production Stage"
-                npm install netlify-cli
-                node_modules/.bin/netlify --version
-                echo "Deploying to Production environment Site Id :- $NETLIFY_SITE_ID"
-                node_modules/.bin/netlify status
-                node_modules/.bin/netlify deploy --dir=build --prod
-                '''
 
-            }
-        }
-
-        stage('Production E2E'){
+        stage('Deploy Production And E2E '){
                 agent{
                     docker {
                         // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
@@ -178,6 +163,13 @@ pipeline {
 
                 steps {
                     sh '''
+                    echo "This is the Deploy Production Stage"
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version
+                    echo "Deploying to Production environment Site Id :- $NETLIFY_SITE_ID"
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --prod
+                    
                     echo "This is the End to End Stage for production check "
                     npx playwright test --reporter=line
                     '''
