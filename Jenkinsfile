@@ -83,31 +83,7 @@ pipeline {
 
 
 
-        stage('Deploy Staging'){
-                    agent{
-                        docker {
-                            image 'node:18-alpine'
-                            reuseNode true
-                        }
-                    }
-                    steps {
-                        sh '''
-                        echo "This is the Deploy Staging Stage"
-                        npm install netlify-cli node-jq
-                        node_modules/.bin/netlify --version
-                        echo "Deploying to Staging environment Site Id :- $NETLIFY_SITE_ID"
-                        node_modules/.bin/netlify status
-                        node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
-                        
-                        '''
-                        script{
-                            env.STAGING_URL = sh(script: "node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json" , returnStdout: true )
-                        }
-                    
-                    }
-                }
-
-        stage('Staging E2E'){
+        stage('Deployment Staging And E2E'){
                         agent{
                             docker {
                                 // image 'mcr.microsoft.com/playwright:v1.49.1-noble'
@@ -118,11 +94,20 @@ pipeline {
                         }
 
                         environment{
-                            CI_ENVIRONMENT_URL = "${env.STAGING_URL}"
+                            CI_ENVIRONMENT_URL = 'Staging url'
                         }
 
                         steps {
                             sh '''
+                            echo "This is the Deploy Staging Stage"
+                            npm install netlify-cli node-jq
+                            node_modules/.bin/netlify --version
+                            echo "Deploying to Staging environment Site Id :- $NETLIFY_SITE_ID"
+                            node_modules/.bin/netlify status
+                            node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
+                            CI_ENVIRONMENT_URL=$(node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json)
+                            
+
                             echo "This is the End to End Stage for Staging check "
                             npx playwright test --reporter=line
                             '''
@@ -138,7 +123,7 @@ pipeline {
                 stage('Approval'){
                             steps {
                                 echo 'Waiting For Approval'
-                                timeout(time: 1, unit: 'MINUTES') {
+                                timeout(time: 5, unit: 'MINUTES') {
                                     input 'Do you want to go For Deployment ?'
                                 }
                                 
@@ -169,7 +154,7 @@ pipeline {
                     echo "Deploying to Production environment Site Id :- $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
                     node_modules/.bin/netlify deploy --dir=build --prod
-                    
+
                     echo "This is the End to End Stage for production check "
                     npx playwright test --reporter=line
                     '''
